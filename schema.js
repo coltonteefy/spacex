@@ -1,6 +1,7 @@
 const axios = require('axios');
-const {GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLBoolean, GraphQLList, GraphQLSchema} = require('graphql');
+const {GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLList, GraphQLSchema} = require('graphql');
 
+// -----------------LAUNCHES---------------------
 //launch type
 const LaunchType = new GraphQLObjectType({
     name: 'Launch',
@@ -10,19 +11,62 @@ const LaunchType = new GraphQLObjectType({
         launch_year: {type: GraphQLString},
         launch_date_local: {type: GraphQLString},
         launch_success: {type: GraphQLBoolean},
-        rocket: {type: RocketType},
+        links: {type: Links}
     })
 });
 
-//Rocket type
-const RocketType = new GraphQLObjectType({
-    name: 'Rocket',
+//youtube link
+const Links = new GraphQLObjectType({
+    name: 'Links',
     fields: () => ({
-        rocket_id: {type: GraphQLString},
-        rocket_name: {type: GraphQLString},
-        rocket_type: {type: GraphQLString},
+        video_link: {type: GraphQLString},
+        youtube_id: {type: GraphQLString},
     })
 });
+
+//Next Launch Date
+const NextLaunch = new GraphQLObjectType({
+    name: 'NextLaunch',
+    fields: () => ({
+        launch_date_utc: {type: GraphQLString},
+        mission_name: {type: GraphQLString},
+    })
+});
+
+
+// -----------------ROCKETS---------------------
+//Rocket type
+const RocketType = new GraphQLObjectType({
+    name: 'Rockets',
+    fields: () => ({
+        id: {type: GraphQLString},
+        cost_per_launch: {type: GraphQLInt},
+        height: {type: RocketHeight},
+        mass: {type: RocketMass},
+        description: {type: GraphQLString},
+        rocket_name: {type: GraphQLString},
+        rocket_id: {type: GraphQLString},
+    })
+});
+
+//Height
+const RocketHeight = new GraphQLObjectType({
+    name: 'RocketHeight',
+    fields: () => ({
+        meters: {type: GraphQLFloat},
+        feet: {type: GraphQLFloat},
+    })
+});
+
+//Mass
+const RocketMass = new GraphQLObjectType({
+    name: 'RocketMass',
+    fields: () => ({
+        kg: {type: GraphQLInt},
+        lb: {type: GraphQLInt},
+    })
+});
+
 
 //Root Query
 const RootQuery = new GraphQLObjectType({
@@ -45,6 +89,13 @@ const RootQuery = new GraphQLObjectType({
                     .then(res => res.data);
             }
         },
+        nextLaunch: {
+            type: NextLaunch,
+            resolve(parent, args) {
+                return axios.get('https://api.spacexdata.com/v3/launches/next')
+                    .then(res => res.data);
+            }
+        },
         rockets: {
             type: new GraphQLList(RocketType),
             resolve(parent, args) {
@@ -61,7 +112,7 @@ const RootQuery = new GraphQLObjectType({
                 return axios.get(`https://api.spacexdata.com/v3/rockets/${args.id}`)
                     .then(res => res.data);
             }
-        }
+        },
     }
 });
 
